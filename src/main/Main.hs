@@ -11,7 +11,8 @@ import Data.Monoid             (mconcat)
 import Data.String             (fromString)
 import Data.Text               (Text)
 import Happstack.Server        ( Response, ServerPartT, ok, toResponse, simpleHTTP
-                               , nullConf, seeOther, dir, notFound, seeOther)
+                               , nullConf, seeOther, dir, notFound, seeOther
+                               , Method(GET, POST), method, methodM)
 import Text.Blaze.Html4.Strict ( (!), html, head, body, title, p, toHtml
                                , toValue, ol, li, a)
 import Text.Blaze.Html4.Strict.Attributes (href)
@@ -48,11 +49,16 @@ sitemap =
 articleId :: Router () (ArticleId :- ())
 articleId =
     xmaph ArticleId (Just . unArticleId) int
+
 route :: Sitemap -> RouteT Sitemap (ServerPartT IO) Response
 route url =
     case url of
       Home                  -> homePage
-      (Article articleId)   -> articlePage articleId
+      (Article articleId)   -> msum[do method GET
+                                       articlePage articleId
+                               ,    do method POST
+                                       articlePage articleId
+                               ]
       UserOverview          -> userOverviewPage
       (UserDetail uid name) -> userDetailPage uid name
 

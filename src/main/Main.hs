@@ -1,4 +1,4 @@
-{-# LANGUAGE DeriveDataTypeable, GeneralizedNewtypeDeriving, TemplateHaskell, 
+{-# LANGUAGE DeriveDataTypeable, DeriveGeneric, GeneralizedNewtypeDeriving, TemplateHaskell, 
   TypeOperators, OverloadedStrings #-}
 module Main where
 
@@ -6,123 +6,66 @@ import Prelude                 hiding (head, id, (.))
 import Control.Category        (Category(id, (.)))
 
 import Control.Monad           (msum)
+import Control.Monad.IO.Class  (liftIO)
+import Data.Aeson
 import Data.Data               (Data, Typeable)
-import Data.Monoid             (mconcat)
-import Data.String             (fromString)
 import Data.Text               (Text)
-import Happstack.Server        ( Response, ServerPartT, ok, toResponse, simpleHTTP
-                               , nullConf, seeOther, dir, notFound, seeOther
-                               , Method(GET, POST), method, methodM)
-import Text.Blaze.Html4.Strict ( (!), html, head, body, title, p, toHtml
-                               , toValue, ol, li, a)
-import Text.Blaze.Html4.Strict.Attributes (href)
+import GHC.Generics
+import Happstack.Server        ( askRq, Response, ServerPartT, ok, toResponse
+	                           , simpleHTTP, nullConf, seeOther, dir, notFound
+	                           , seeOther, Method(POST), method, takeRequestBody, badRequest
+	                           , unBody)
 import Text.Boomerang.TH       (makeBoomerangs)
 import Web.Routes              ( PathInfo(..), RouteT, showURL
                                , runRouteT, Site(..), setDefault, mkSitePI)
-import Web.Routes.TH           (derivePathInfo)
 import Web.Routes.Happstack    (implSite)
 import Web.Routes.Boomerang
 
-newtype ArticleId
-    = ArticleId { unArticleId :: Int }
-      deriving (Eq, Ord, Enum, Read, Show, Data, Typeable, PathInfo)
+data User =
+	User { name :: !Text
+		 , age :: Int
+		 } deriving (Show, Generic)
+
+instance FromJSON User
+instance ToJSON User
 
 data Sitemap
-    = Home
-    | Article ArticleId
-    | UserOverview
-    | UserDetail Int Text
+    = UserOverview
       deriving (Eq, Ord, Read, Show, Data, Typeable)
 
 $(makeBoomerangs ''Sitemap)
 
 sitemap :: Router () (Sitemap :- ())
 sitemap =
-    (  rHome
-    <> rArticle . (lit "article" </> articleId)
-    <> lit "users" . users
+    ( lit "users" . rUserOverview
     )
-    where
-      users =  rUserOverview
-            <> rUserDetail </> int . lit "-" . anyText
-
-articleId :: Router () (ArticleId :- ())
-articleId =
-    xmaph ArticleId (Just . unArticleId) int
 
 route :: Sitemap -> RouteT Sitemap (ServerPartT IO) Response
 route url =
     case url of
-      Home                  -> homePage
-      (Article articleId)   -> msum[do method GET
-                                       articlePage articleId
-                               ,    do method POST
-                                       articlePage articleId
+      UserOverview          -> msum[do method POST
+                                       userOverviewPage
                                ]
-      UserOverview          -> userOverviewPage
-      (UserDetail uid name) -> userDetailPage uid name
-
-homePage :: RouteT Sitemap (ServerPartT IO) Response
-homePage =
-    do articles     <- mapM mkArticle [(ArticleId 1) .. (ArticleId 10)]
-       userOverview <- showURL UserOverview
-       ok $ toResponse $
-          html $ do
-            head $ title $ "Welcome Home!"
-            body $ do
-              a ! href (toValue userOverview) $ "User Overview"
-              ol $ mconcat articles
-    where
-      mkArticle articleId =
-          do url <- showURL (Article articleId)
-             return $ li $ a ! href (toValue url) $
-                        toHtml $ "Article " ++ (show $ unArticleId articleId)
-
-articlePage :: ArticleId -> RouteT Sitemap (ServerPartT IO) Response
-articlePage (ArticleId articleId) =
-    do homeURL <- showURL Home
-       ok $ toResponse $
-          html $ do
-            head $ title $ (toHtml $ "Article " ++ show articleId)
-            body $ do
-                   p $ toHtml $ "You are now reading article " ++ show articleId
-                   p $ do "Click "
-                          a ! href (toValue homeURL) $ "here"
-                          " to return home."
 
 userOverviewPage :: RouteT Sitemap (ServerPartT IO) Response
-userOverviewPage =
-    do users <- mapM mkUser [1 .. 10]
-       ok $ toResponse $
-          html $ do
-            head $ title $ "Our Users"
-            body $ do
-              ol $ mconcat users
-    where
-      mkUser userId =
-          do url <- showURL (UserDetail userId (fromString $ "user " ++ show userId))
-             return $ li $ a ! href (toValue url) $
-                        toHtml $ "User " ++ (show $ userId)
+userOverviewPage = do
+    requ <- askRq
+    body <- liftIO $ takeRequestBody requ
+    ubdy <- case body of 
+                Just rqbody -> return . unBody $ rqbody 
+                Nothing     -> return "" 
+    case decode ubdy :: Maybe User of
+        Just user -> ok $ toResponse $ encode $ user { age = age user * 2 }
+        Nothing   -> badRequest $ toResponse $ ("Could not parse" :: String)
 
-userDetailPage :: Int -> Text -> RouteT Sitemap (ServerPartT IO) Response
-userDetailPage userId userName =
-    do homeURL <- showURL Home
-       ok $ toResponse $
-          html $ do
-            head $ title $ (toHtml $ "User " <> userName)
-            body $ do
-                   p $ toHtml $ "You are now view user detail page for " <> userName
-                   p $ do "Click "
-                          a ! href (toValue homeURL) $ "here"
-                          " to return home."
+routeNotFound :: ServerPartT IO Response
+routeNotFound = notFound $ toResponse $ ("Not found" :: String)
 
 site :: Site Sitemap (ServerPartT IO Response)
-site =
-       setDefault Home $ boomerangSite (runRouteT route) sitemap
+site = boomerangSite (runRouteT route) sitemap
 
 main :: IO ()
 main = simpleHTTP nullConf $
-       msum [ dir "favicon.ico" $ notFound (toResponse ())
-            , implSite "http://localhost:8000" "/route" site
-            , seeOther ("/route/" :: String) (toResponse ())
+       msum [ implSite "http://localhost:8000" "" site
+            , routeNotFound
             ]

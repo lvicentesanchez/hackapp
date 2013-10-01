@@ -13,18 +13,16 @@ maintainer:            langel.vicente@gmail.com
 category:              Web
 build-type:            Simple
 -- extra-source-files:  
-cabal-version:         >=1.18
+cabal-version:         >= 1.18
 
 executable             haskapp
   main-is:             Main.hs
-  ghc-options:         -O2 -static -optc-static -optl-static -optl-pthread             
+  ghc-options:         -O2 -static -optc-static -optl-static -optl-pthread -threaded -with-rtsopts=-N             
   -- other-modules:       
   -- other-extensions:    
   build-depends:       aeson >= 0.6 && < 0.7,
                        base >= 4.6 && < 4.7,
-                       blaze-html == 0.5.1.3,
                        boomerang >= 1.4 && < 1.5,
-                       bytestring >= 0.10 && < 0.11,
                        happstack-server >= 7.3.0 && < 7.4.0,
                        transformers >= 0.3 && < 0.4,
                        text >= 0.11 && < 0.12,

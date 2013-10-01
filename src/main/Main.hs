@@ -12,9 +12,9 @@ import Data.Data               (Data, Typeable)
 import Data.Text               (Text)
 import GHC.Generics
 import Happstack.Server        ( askRq, Response, ServerPartT, ok, toResponse
-	                           , simpleHTTP, nullConf, seeOther, dir, notFound
-	                           , seeOther, Method(POST), method, takeRequestBody, badRequest
-	                           , unBody)
+                               , simpleHTTP, nullConf, seeOther, dir, notFound
+                               , seeOther, Method(POST), method, takeRequestBody, badRequest
+                               , unBody)
 import Text.Boomerang.TH       (makeBoomerangs)
 import Web.Routes              ( PathInfo(..), RouteT, showURL
                                , runRouteT, Site(..), setDefault, mkSitePI)
@@ -22,9 +22,9 @@ import Web.Routes.Happstack    (implSite)
 import Web.Routes.Boomerang
 
 data User =
-	User { name :: !Text
-		 , age :: Int
-		 } deriving (Show, Generic)
+    User { name :: !Text
+         , age :: Int
+         } deriving (Show, Generic)
 
 instance FromJSON User
 instance ToJSON User
@@ -43,9 +43,9 @@ sitemap =
 route :: Sitemap -> RouteT Sitemap (ServerPartT IO) Response
 route url =
     case url of
-      UserOverview          -> msum[do method POST
-                                       userOverviewPage
-                               ]
+        UserOverview -> msum[do method POST
+                                userOverviewPage
+                        ]
 
 userOverviewPage :: RouteT Sitemap (ServerPartT IO) Response
 userOverviewPage = do
@@ -66,6 +66,6 @@ site = boomerangSite (runRouteT route) sitemap
 
 main :: IO ()
 main = simpleHTTP nullConf $
-       msum [ implSite "http://localhost:8000" "" site
-            , routeNotFound
-            ]
+    msum [ implSite "http://localhost:8000" "" site
+         , routeNotFound
+    ]

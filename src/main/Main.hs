@@ -2,23 +2,21 @@
   TypeOperators, OverloadedStrings #-}
 module Main where
 
-import Prelude                 hiding (head, id, (.))
-import Control.Category        (Category(id, (.)))
+import Prelude                 hiding ( (.) )
+import Control.Category        ( Category((.)) )
 
-import Control.Monad           (msum)
-import Control.Monad.IO.Class  (liftIO)
+import Control.Monad           ( msum )
+import Control.Monad.IO.Class  ( liftIO )
 import Data.Aeson
-import Data.Data               (Data, Typeable)
-import Data.Text               (Text)
+import Data.Data               ( Data, Typeable )
+import Data.Text               ( Text )
 import GHC.Generics
 import Happstack.Server        ( askRq, Response, ServerPartT, ok, toResponse
-                               , simpleHTTP, nullConf, seeOther, dir, notFound
-                               , seeOther, Method(POST), method, takeRequestBody, badRequest
-                               , unBody)
-import Text.Boomerang.TH       (makeBoomerangs)
-import Web.Routes              ( PathInfo(..), RouteT, showURL
-                               , runRouteT, Site(..), setDefault, mkSitePI)
-import Web.Routes.Happstack    (implSite)
+                               , simpleHTTP, nullConf, notFound, Method(POST), method
+                               , takeRequestBody, badRequest, unBody )
+import Text.Boomerang.TH       ( makeBoomerangs )
+import Web.Routes              ( RouteT, runRouteT, Site(..) )
+import Web.Routes.Happstack    ( implSite )
 import Web.Routes.Boomerang
 
 data User =

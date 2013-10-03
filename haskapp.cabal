@@ -23,11 +23,10 @@ executable             haskapp
   build-depends:       aeson >= 0.6 && < 0.7,
                        base >= 4.6 && < 4.7,
                        boomerang >= 1.4 && < 1.5,
-                       happstack-server >= 7.3.0 && < 7.4.0,
+                       happstack-server >= 7.3.1 && < 7.4,
                        transformers >= 0.3 && < 0.4,
                        text >= 0.11 && < 0.12,
                        web-routes >= 0.27 && < 0.28,
-                       web-routes-th >= 0.22 && < 0.23,
                        web-routes-boomerang >= 0.28 && < 0.29,
                        web-routes-happstack >= 0.23 && < 0.24
   hs-source-dirs:      src/main    

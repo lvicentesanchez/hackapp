@@ -17,17 +17,17 @@ cabal-version:         >= 1.18
 
 executable             haskapp
   main-is:             Main.hs
-  ghc-options:         -O2 -static -optc-static -optl-static -optl-pthread -threaded -with-rtsopts=-N             
+  ghc-options:         -O2 -static -threaded -with-rtsopts=-N             
   -- other-modules:       
   -- other-extensions:    
-  build-depends:       aeson >= 0.6 && < 0.7,
-                       base >= 4.6 && < 4.7,
-                       boomerang >= 1.4 && < 1.5,
-                       happstack-server >= 7.3.1 && < 7.4,
-                       transformers >= 0.3 && < 0.4,
-                       text >= 0.11 && < 0.12,
-                       web-routes >= 0.27 && < 0.28,
-                       web-routes-boomerang >= 0.28 && < 0.29,
-                       web-routes-happstack >= 0.23 && < 0.24
+  build-depends:       aeson,
+                       base,
+                       boomerang,
+                       happstack-server,
+                       transformers,
+                       text,
+                       web-routes,
+                       web-routes-boomerang,
+                       web-routes-happstack
   hs-source-dirs:      src/main    
   default-language:    Haskell2010

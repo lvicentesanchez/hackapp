@@ -1,27 +1,32 @@
-{-# LANGUAGE DeriveDataTypeable, DeriveGeneric, GeneralizedNewtypeDeriving, TemplateHaskell, 
-  TypeOperators, OverloadedStrings #-}
+{-# LANGUAGE DeriveDataTypeable         #-}
+{-# LANGUAGE DeriveGeneric              #-}
+{-# LANGUAGE GeneralizedNewtypeDeriving #-}
+{-# LANGUAGE OverloadedStrings          #-}
+{-# LANGUAGE TemplateHaskell            #-}
+{-# LANGUAGE TypeOperators              #-}
 module Main where
 
-import Prelude                 hiding ( (.) )
-import Control.Category        ( Category((.)) )
+import           Control.Category       (Category ((.)))
+import           Prelude                hiding ((.))
 
-import Control.Monad           ( msum )
-import Control.Monad.IO.Class  ( liftIO )
-import Data.Aeson
-import Data.Data               ( Data, Typeable )
-import Data.Text               ( Text )
-import GHC.Generics
-import Happstack.Server        ( askRq, Response, ServerPartT, ok, toResponse
-                               , simpleHTTP, nullConf, notFound, Method(POST), method
-                               , takeRequestBody, badRequest, unBody )
-import Text.Boomerang.TH       ( makeBoomerangs )
-import Web.Routes              ( RouteT, runRouteT, Site(..) )
-import Web.Routes.Happstack    ( implSite )
-import Web.Routes.Boomerang
+import           Control.Monad          (msum)
+import           Control.Monad.IO.Class (liftIO)
+import           Data.Aeson
+import           Data.Data              (Data, Typeable)
+import           Data.Text              (Text)
+import           GHC.Generics
+import           Happstack.Server       (Method (POST), Response, ServerPartT,
+                                         askRq, badRequest, method, notFound,
+                                         nullConf, ok, simpleHTTP,
+                                         takeRequestBody, toResponse, unBody)
+import           Text.Boomerang.TH      (makeBoomerangs)
+import           Web.Routes             (RouteT, Site (..), runRouteT)
+import           Web.Routes.Boomerang
+import           Web.Routes.Happstack   (implSite)
 
 data User =
     User { name :: !Text
-         , age :: Int
+         , age  :: Int
          } deriving (Show, Generic)
 
 instance FromJSON User
@@ -49,15 +54,15 @@ userOverviewPage :: RouteT Sitemap (ServerPartT IO) Response
 userOverviewPage = do
     requ <- askRq
     body <- liftIO $ takeRequestBody requ
-    ubdy <- case body of 
-                Just rqbody -> return . unBody $ rqbody 
-                Nothing     -> return "" 
+    ubdy <- case body of
+                Just rqbody -> return . unBody $ rqbody
+                Nothing     -> return ""
     case decode ubdy :: Maybe User of
         Just user -> ok $ toResponse $ encode $ user { age = age user * 2 }
-        Nothing   -> badRequest $ toResponse $ ("Could not parse" :: String)
+        Nothing   -> badRequest $ toResponse ("Could not parse" :: String)
 
 routeNotFound :: ServerPartT IO Response
-routeNotFound = notFound $ toResponse $ ("Not found" :: String)
+routeNotFound = notFound $ toResponse ("Not found" :: String)
 
 site :: Site Sitemap (ServerPartT IO Response)
 site = boomerangSite (runRouteT route) sitemap

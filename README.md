@@ -1,4 +1,4 @@
 HaskApp
 =======
 
-Haskell web application using happstack.
+Haskell web application using happstack (modified from FP Complete).

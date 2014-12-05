@@ -17,7 +17,7 @@ cabal-version:         >= 1.18
 
 executable             haskapp
   main-is:             Main.hs
-  ghc-options:         -O2 -static -threaded -with-rtsopts=-N             
+  ghc-options:         -O2 -threaded -with-rtsopts=-N             
   -- other-modules:       
   -- other-extensions:    
   build-depends:       aeson,
